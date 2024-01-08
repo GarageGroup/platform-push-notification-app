@@ -1,0 +1,155 @@
+name: Publish AzureFunc Artifact
+
+on:
+  page_build:
+  release:
+    types:
+      - created
+
+jobs:
+  publish-version:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Add Garage Group NuGet Source
+      run: >
+        dotnet nuget add source ${{ vars.GG_NUGET_SOURCE_URL }}
+        -n garage
+        -u ${{ secrets.GG_NUGET_SOURCE_USER_NAME }}
+        -p ${{ secrets.GG_NUGET_SOURCE_USER_PASSWORD }}
+        --store-password-in-clear-text
+
+    - name: Restore AzureFunc
+      run: dotnet restore ./src/*/AzureFunc.csproj
+
+    - name: Build AzureFunc
+      run: dotnet build ./src/*/AzureFunc.csproj --no-restore  -c Release
+
+    - name: Publish AzureFunc
+      run: dotnet publish ./src/*/AzureFunc.csproj --no-build  -c Release --output ./build
+
+    - name: Get version
+      id: get_version
+      run: echo "version=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_OUTPUT
+
+    - name: Get current date time
+      id: date
+      run: echo "datetime=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+
+    - name: App Settings Variable Substitution
+      uses: microsoft/variable-substitution@v1
+      with:
+        files: './publish/appsettings.json'
+      env:
+        Info.ApiVersion: '${{ steps.get_version.outputs.version }}'
+        Info.BuildDateTime: '${{ steps.date.outputs.datetime }}'
+
+    - name: Archive publish folder
+      run: |
+        cd ./build
+        zip -r ${{ vars.AZURE_ARTIFACT_NAME }}-${{ steps.get_version.outputs.version }}.zip ./
+
+    - name: Azure Loging
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS_ARTIFACT }}
+
+    - name: Upload to Azure Blob Storage
+      uses: azure/CLI@v1
+      with:
+        azcliversion: 2.30.0
+        inlineScript: |
+          az storage blob upload \
+            --container-name artifacts \
+            --file ./build/${{ vars.AZURE_ARTIFACT_NAME }}-${{ steps.get_version.outputs.version }}.zip \
+            --account-name startifactblob \
+            --account-key ${{ secrets.AZURE_ACCOUNT_KEY_ARTIFACT }} \
+      env:
+        AZURE_STORAGE_ACCOUNT: startifactblob
+
+    - name: Azure Logout
+      uses: azure/CLI@v1
+      with:
+        inlineScript: az logout
+
+  publish-latest:
+    if: github.event.release.prerelease == false
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Add Garage Group NuGet Source
+      run: >
+        dotnet nuget add source ${{ vars.GG_NUGET_SOURCE_URL }}
+        -n ggroupp
+        -u ${{ secrets.GG_NUGET_SOURCE_USER_NAME }}
+        -p ${{ secrets.GG_NUGET_SOURCE_USER_PASSWORD }}
+        --store-password-in-clear-text
+
+    - name: Restore AzureFunc
+      run: dotnet restore ./src/*/AzureFunc.csproj
+
+    - name: Build AzureFunc
+      run: dotnet build ./src/*/AzureFunc.csproj --no-restore  -c Release
+
+    - name: Publish AzureFunc
+      run: dotnet publish ./src/*/AzureFunc.csproj --no-build  -c Release --output ./build
+
+    - name: Get version
+      id: get_version
+      run: echo "version=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_OUTPUT
+
+    - name: Get current date time
+      id: date
+      run: echo "datetime=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+
+    - name: App Settings Variable Substitution
+      uses: microsoft/variable-substitution@v1
+      with:
+        files: './publish/appsettings.json'
+      env:
+        Info.ApiVersion: '${{ steps.get_version.outputs.version }}'
+        Info.BuildDateTime: '${{ steps.date.outputs.datetime }}'
+
+    - name: Archive publish folder
+      run: |
+        cd ./build
+        zip -r ${{ vars.AZURE_ARTIFACT_NAME }}-latest.zip ./
+
+    - name: Azure Loging
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS_ARTIFACT }}
+
+    - name: Upload to Azure Blob Storage
+      uses: azure/CLI@v1
+      with:
+        azcliversion: 2.30.0
+        inlineScript: |
+          az storage blob upload \
+            --container-name artifacts \
+            --file ./build/${{ vars.AZURE_ARTIFACT_NAME }}-latest.zip \
+            --account-name startifactblob \
+            --account-key ${{ secrets.AZURE_ACCOUNT_KEY_ARTIFACT }} \
+      env:
+        AZURE_STORAGE_ACCOUNT: startifactblob
+
+    - name: Azure Logout
+      uses: azure/CLI@v1
+      with:
+        inlineScript: az logout
