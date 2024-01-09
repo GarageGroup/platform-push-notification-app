@@ -1,2 +1,2 @@
-# push-notification-app
+# platform-push-notification-app
 Web Application to send push notification
