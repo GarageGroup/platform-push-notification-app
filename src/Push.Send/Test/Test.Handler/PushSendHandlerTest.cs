@@ -11,9 +11,12 @@ public static partial class PushSendHandlerTest
     private static readonly PushSendIn SomeInput
         =
         new(
-            pushToken: "SomePushToken",
-            title: "New Opportunities (5)",
-            body: "We have some new properties to offer, open mobile app to offer it",
+            token: "SomePushToken",
+            notification: new()
+            {
+                Title = "Some push title",
+                Body = "Some push body"
+            },
             data: new Dictionary<string, string>
             {
                 ["FirstKey"] = "Some first value",

@@ -1,4 +1,5 @@
-﻿using GarageGroup.Infra;
+﻿using System;
+using GarageGroup.Infra;
 
 namespace GarageGroup.Platform.PushNotification;
 
@@ -6,28 +7,21 @@ using ITokenErrorBusApi = IBusMessageSendSupplier<PushTokenErrorJson>;
 
 internal sealed partial class PushSendHandler(IFirebaseSendFunc firebaseSendFunc, ITokenErrorBusApi? tokenErrorBusApi) : IPushSendHandler
 {
-    private enum PushSendFailureCode
+    private static Result<PushSendIn, Failure<HandlerFailureCode>> ValidateInput(PushSendIn? input)
     {
-        Unknown,
+        if (string.IsNullOrWhiteSpace(input?.Token))
+        {
+            return Failure.Create(HandlerFailureCode.Persistent, "Token must be specified");
+        }
 
-        InvalidInput,
-
-        InvalidPushToken
+        return Result.Success(input);
     }
 
-    private static PushSendFailureCode MapFirebaseSendFailureCode(FirebaseSendFailureCode failureCode)
+    private static HandlerFailureCode MapFailureCode(FirebaseSendFailureCode failureCode)
         =>
         failureCode switch
         {
-            FirebaseSendFailureCode.Unregistered or FirebaseSendFailureCode.InvalidArgument => PushSendFailureCode.InvalidPushToken,
-            _ => PushSendFailureCode.Unknown
-        };
-
-    private static HandlerFailureCode MapFailureCode(PushSendFailureCode failureCode)
-        =>
-        failureCode switch
-        {
-            PushSendFailureCode.InvalidPushToken or PushSendFailureCode.InvalidInput => HandlerFailureCode.Persistent,
+            FirebaseSendFailureCode.Unregistered or FirebaseSendFailureCode.InvalidArgument => HandlerFailureCode.Persistent,
             _ => HandlerFailureCode.Transient
         };
 }

@@ -9,7 +9,9 @@ public static partial class FirebaseSendFuncTest
     private static readonly FirebaseSendIn SomeInput
         =
         new(
-            message: new(
-                token: "F1mc_dg1dFG",
-                notification: new("Some messages are waiting for you...", "You have 6 unread messages")));
+            message: new()
+            {
+                Token = "F1mc_dg1dFG",
+                Notification = new("Some messages are waiting for you...", "You have 6 unread messages")
+            });
 }
