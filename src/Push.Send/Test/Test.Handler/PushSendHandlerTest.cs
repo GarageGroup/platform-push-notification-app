@@ -11,7 +11,7 @@ public static partial class PushSendHandlerTest
     private static readonly PushSendIn SomeInput
         =
         new(
-            pushToken: "3c575a1c42274f90a4d3a5f838522f7c",
+            pushToken: "SomePushToken",
             title: "New Opportunities (5)",
             body: "We have some new properties to offer, open mobile app to offer it",
             data: new Dictionary<string, string>
