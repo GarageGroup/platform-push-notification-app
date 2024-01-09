@@ -25,8 +25,8 @@ public static class PushSendDependency
 
             return new(
                 firebaseSendFunc: new ImplFirebaseSendFunc(
-                    httpMessageHandler: new FirebaseAuthorizationHandler(option, httpMessageHandler),
-                    option: option),
+                    httpMessageHandler: new FirebaseAuthorizationHandler(option.Credential, httpMessageHandler),
+                    projectId: option.Credential.ProjectId.OrEmpty()),
                 tokenErrorBusApi: tokenErrorBusApi);
         }
     }

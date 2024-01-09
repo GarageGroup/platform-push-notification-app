@@ -2,12 +2,9 @@
 
 public static partial class FirebaseSendFuncTest
 {
-    private static readonly PushSendOption SomeOption
+    private const string SomeProjectId
         =
-        new(
-            serviceUri: new("https://someFcmUri.com"),
-            projectName: "SomeProjectName",
-            googleCredentialJson: "{ \"type\": \"service_account\", \"private_key_id\": \"SomePrivateKeyId\" }");
+        "SomeProjectId";
 
     private static readonly FirebaseSendIn SomeInput
         =

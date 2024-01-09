@@ -6,15 +6,12 @@ namespace GarageGroup.Platform.PushNotification.Push.Send.Test;
 
 partial class FirebaseSendFuncTestSource
 {
-    public static TheoryData<PushSendOption, FirebaseSendIn, Uri, string> InputValidTestData
+    public static TheoryData<string, FirebaseSendIn, Uri, string> InputValidTestData
         =>
         new()
         {
             {
-                new(
-                    googleCredentialJson: "testKey",
-                    serviceUri: new("https://testFcmUri.com"),
-                    projectName: "SomeProject"),
+                "SomeProject",
                 new(
                     message: new(
                         token: "someToken",
@@ -22,7 +19,7 @@ partial class FirebaseSendFuncTestSource
                     {
                         Data = null
                     }),
-                new("https://testFcmUri.com/v1/projects/SomeProject/messages:send"),
+                new("https://fcm.googleapis.com/v1/projects/SomeProject/messages:send"),
                 InnerBuildFirebaseJson(
                     message: new(
                         token: "someToken",
@@ -32,10 +29,7 @@ partial class FirebaseSendFuncTestSource
                     })
             },
             {
-                new(
-                    googleCredentialJson: "SomeKey",
-                    serviceUri: new("http://some-uri.site/"),
-                    projectName: "project/test//"),
+                "project/test//",
                 new(
                     message: new(
                         token: "SomeToken",
@@ -43,7 +37,7 @@ partial class FirebaseSendFuncTestSource
                     {
                         Data = new Dictionary<string, string>()
                     }),
-                new("http://some-uri.site/v1/projects/project/test///messages:send"),
+                new("https://fcm.googleapis.com/v1/projects/project/test///messages:send"),
                 InnerBuildFirebaseJson(
                     message: new(
                         token: "SomeToken",
@@ -53,10 +47,7 @@ partial class FirebaseSendFuncTestSource
                     })
             },
             {
-                new(
-                    googleCredentialJson: "Some Key",
-                    serviceUri: new("http://some-uri.site/"),
-                    projectName: "Some Project"),
+                "Some Project",
                 new(
                     message: new(
                         token: "Some token",
@@ -69,7 +60,7 @@ partial class FirebaseSendFuncTestSource
                             [string.Empty] = "Some Value"
                         }
                     }),
-                new("http://some-uri.site/v1/projects/Some Project/messages:send"),
+                new("https://fcm.googleapis.com/v1/projects/Some Project/messages:send"),
                 InnerBuildFirebaseJson(
                     message: new FirebaseMessageJson(
                         token: "Some token",

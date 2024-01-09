@@ -11,6 +11,6 @@ partial class Application
         =>
         Dependency.From(
             ServiceProviderServiceExtensions.GetRequiredService<IBusMessageApi<PushSendIn>>)
-        .UseServiceHealthCheckApi("CosmosStorage")
+        .UseServiceHealthCheckApi("PushNotificationBusApi")
         .UseHealthCheckHandler();
 }

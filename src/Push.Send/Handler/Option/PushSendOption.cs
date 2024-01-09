@@ -1,19 +1,10 @@
-﻿using System;
-
-namespace GarageGroup.Platform.PushNotification;
+﻿namespace GarageGroup.Platform.PushNotification;
 
 public sealed record class PushSendOption
 {
-    public PushSendOption(Uri serviceUri, string projectName, string googleCredentialJson)
-    {
-        ServiceUri = serviceUri;
-        ProjectName = projectName.OrEmpty();
-        GoogleCredentialJson = googleCredentialJson.OrEmpty();
-    }
+    public PushSendOption(GoogleCredentialJson credential)
+        =>
+        Credential = credential ?? new();
 
-    public Uri ServiceUri { get; }
-
-    public string ProjectName { get; }
-
-    public string GoogleCredentialJson { get; }
+    public GoogleCredentialJson Credential { get; }
 }
