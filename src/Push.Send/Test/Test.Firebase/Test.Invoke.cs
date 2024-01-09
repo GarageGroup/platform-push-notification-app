@@ -12,12 +12,12 @@ partial class FirebaseSendFuncTest
     [Theory]
     [MemberData(nameof(FirebaseSendFuncTestSource.InputValidTestData), MemberType = typeof(FirebaseSendFuncTestSource))]
     internal static async Task InvokeAsync_ExpectHttpClientCalledOnce(
-        PushSendOption option, FirebaseSendIn input, Uri expectedRequestUri, string expectedContent)
+        string projectId, FirebaseSendIn input, Uri expectedRequestUri, string expectedContent)
     {
         using var responseMessage = new HttpResponseMessage(HttpStatusCode.OK);
         using var mockMessageHandler = new MockHttpMessageHandler(responseMessage, OnHttpRequestAsync);
 
-        var firebaseSendFunc = new ImplFirebaseSendFunc(mockMessageHandler, option);
+        var firebaseSendFunc = new ImplFirebaseSendFunc(mockMessageHandler, projectId);
 
         var cancellationToken = new CancellationToken(canceled: false);
         _ = await firebaseSendFunc.InvokeAsync(input, cancellationToken);
@@ -42,7 +42,7 @@ partial class FirebaseSendFuncTest
         HttpResponseMessage responseMessage, Failure<FirebaseSendFailureCode> expected)
     {
         using var mockMessageHandler = new MockHttpMessageHandler(responseMessage);
-        var firebaseSendFunc = new ImplFirebaseSendFunc(mockMessageHandler, SomeOption);
+        var firebaseSendFunc = new ImplFirebaseSendFunc(mockMessageHandler, SomeProjectId);
 
         var cancellationToken = new CancellationToken(canceled: false);
         var actual = await firebaseSendFunc.InvokeAsync(SomeInput, cancellationToken);
@@ -56,7 +56,7 @@ partial class FirebaseSendFuncTest
         HttpResponseMessage responseMessage)
     {
         using var mockMessageHandler = new MockHttpMessageHandler(responseMessage);
-        var firebaseSendFunc = new ImplFirebaseSendFunc(mockMessageHandler, SomeOption);
+        var firebaseSendFunc = new ImplFirebaseSendFunc(mockMessageHandler, SomeProjectId);
 
         var cancellationToken = new CancellationToken(canceled: false);
         var actual = await firebaseSendFunc.InvokeAsync(SomeInput, cancellationToken);

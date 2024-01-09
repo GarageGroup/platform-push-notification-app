@@ -36,7 +36,7 @@ partial class ApplicationService
     private static IServiceCollection RegisterPushTokenBusApi(this IServiceCollection services)
         =>
         ServiceBusMessageApi.Configure<PushSendIn>(
-            BusConnectionStringKey, BusPushTokenQueueKey)
+            BusConnectionStringKey, BusPushNotificationQueueKey)
         .ToRegistrar(services)
         .RegisterSingleton();
 }

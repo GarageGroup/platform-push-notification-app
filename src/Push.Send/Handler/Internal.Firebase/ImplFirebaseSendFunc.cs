@@ -8,28 +8,32 @@ using System.Threading.Tasks;
 
 namespace GarageGroup.Platform.PushNotification;
 
-internal sealed class ImplFirebaseSendFunc(HttpMessageHandler httpMessageHandler, PushSendOption option) : IFirebaseSendFunc
+internal sealed class ImplFirebaseSendFunc(HttpMessageHandler httpMessageHandler, string projectId) : IFirebaseSendFunc
 {
+    private static readonly Uri ServiceUri;
+
     private static readonly JsonSerializerOptions SerializerOptions;
 
     static ImplFirebaseSendFunc()
-        =>
+    {
+        ServiceUri = new("https://fcm.googleapis.com");
         SerializerOptions = new()
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             WriteIndented = true
         };
+    }
 
     public async ValueTask<Result<Unit, Failure<FirebaseSendFailureCode>>> InvokeAsync(
         FirebaseSendIn input, CancellationToken cancellationToken)
     {
         var httpClient = new HttpClient(httpMessageHandler, disposeHandler: false)
         {
-            BaseAddress = option.ServiceUri
+            BaseAddress = ServiceUri
         };
 
         var json = new FirebaseBodyJson(input.Message);
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"/v1/projects/{option.ProjectName}/messages:send")
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"/v1/projects/{projectId}/messages:send")
         {
             Content = JsonContent.Create(json, null, SerializerOptions),
         };
