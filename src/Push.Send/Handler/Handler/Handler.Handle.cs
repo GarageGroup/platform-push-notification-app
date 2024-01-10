@@ -14,53 +14,35 @@ partial class PushSendHandler
             input, cancellationToken)
         .Pipe(
             ValidateInput)
-        .MapSuccess(
+        .ForwardValue(
+            InnerHandlerAsync);
+
+    private ValueTask<Result<Unit, Failure<HandlerFailureCode>>> InnerHandlerAsync(
+        PushSendIn input, CancellationToken cancellationToken)
+        =>
+        AsyncPipeline.Pipe(
+            input, cancellationToken)
+        .Pipe(
             static @in => new FirebaseSendIn(
-                message: new(
-                    token: @in.PushToken,
-                    notification: new(
-                        body: @in.Body,
-                        title: @in.Title))
+                message: new()
                 {
+                    Token = @in.Token,
+                    Notification = new(
+                        body: @in.Notification?.Body,
+                        title: @in.Notification?.Title),
                     Data = @in.Data
                 }))
-        .ForwardValue(
-            firebaseSendFunc.InvokeAsync,
-            static failure => failure.MapFailureCode(MapFirebaseSendFailureCode))
-        .OnFailureValue(
-            (failure, token) => ProcessFailureAsync(input, failure, token))
+        .PipeValue(
+            firebaseSendFunc.InvokeAsync)
         .MapFailure(
-            static failure => failure.MapFailureCode(MapFailureCode));
-
-    private static Result<PushSendIn, Failure<PushSendFailureCode>> ValidateInput(PushSendIn? input)
-    {
-        if (input is null)
-        {
-            return Failure.Create(PushSendFailureCode.InvalidInput, "Input must be specified");
-        }
-
-        if (string.IsNullOrWhiteSpace(input.PushToken))
-        {
-            return Failure.Create(PushSendFailureCode.InvalidPushToken, "PushToken must be specified");
-        }
-
-        if (string.IsNullOrWhiteSpace(input.Title))
-        {
-            return Failure.Create(PushSendFailureCode.InvalidInput, "Title must be specified");
-        }
-
-        if (string.IsNullOrWhiteSpace(input.Body))
-        {
-            return Failure.Create(PushSendFailureCode.InvalidInput, "Body must be specified");
-        }
-
-        return input;
-    }
+            static failure => failure.MapFailureCode(MapFailureCode))
+        .OnFailureValue(
+            (failure, token) => ProcessFailureAsync(input, failure, token));
 
     private async ValueTask<Unit> ProcessFailureAsync(
-        PushSendIn? input, Failure<PushSendFailureCode> failure, CancellationToken cancellationToken)
+        PushSendIn? input, Failure<HandlerFailureCode> failure, CancellationToken cancellationToken)
     {
-        if (failure.FailureCode is not PushSendFailureCode.InvalidPushToken || tokenErrorBusApi is null)
+        if (tokenErrorBusApi is null || failure.FailureCode is not HandlerFailureCode.Persistent)
         {
             return default;
         }
@@ -68,7 +50,7 @@ partial class PushSendHandler
         var busMessageInput = new BusMessageSendIn<PushTokenErrorJson>(
             message: new()
             {
-                PushToken = input?.PushToken
+                PushToken = input?.Token
             });
 
         return await tokenErrorBusApi.SendMessageAsync(busMessageInput, cancellationToken).ConfigureAwait(false);

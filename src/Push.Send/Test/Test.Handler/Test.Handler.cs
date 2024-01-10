@@ -11,47 +11,6 @@ partial class PushSendHandlerTest
 {
     [Theory]
     [MemberData(nameof(PushSendHandlerTestSource.InputInvalidTestData), MemberType = typeof(PushSendHandlerTestSource))]
-    public static async Task InvokeAsync_InputIsInvalidButPushTokenIsValid_ExpectPushTokenErrorBusApiCalledNever(
-        PushSendIn? input, Failure<HandlerFailureCode> _)
-    {
-        var mockFirebaseFunc = BuildMockFirebaseSendFunc(Unit.Value);
-        var mockTokenErrorBusApi = CreateMockTokenErrorBusApi();
-
-        var handler = new PushSendHandler(mockFirebaseFunc.Object, mockTokenErrorBusApi.Object);
-
-        var cancellationToken = new CancellationToken(canceled: false);
-        var actual = await handler.HandleAsync(input, cancellationToken);
-
-        mockTokenErrorBusApi.Verify(
-            static a => a.SendMessageOrFailureAsync(It.IsAny<BusMessageSendIn<PushTokenErrorJson>>(), It.IsAny<CancellationToken>()),
-            Times.Never);
-    }
-
-    [Theory]
-    [MemberData(nameof(PushSendHandlerTestSource.InputInvalidPushTokenTestData), MemberType = typeof(PushSendHandlerTestSource))]
-    public static async Task InvokeAsync_InputPushTokenIsInvalid_ExpectPushTokenErrorBusApiCalledOnce(
-        PushSendIn input, Failure<HandlerFailureCode> _)
-    {
-        var mockFirebaseFunc = BuildMockFirebaseSendFunc(Unit.Value);
-        var mockTokenErrorBusApi = CreateMockTokenErrorBusApi();
-
-        var handler = new PushSendHandler(mockFirebaseFunc.Object, mockTokenErrorBusApi.Object);
-
-        var cancellationToken = new CancellationToken(canceled: false);
-        var actual = await handler.HandleAsync(input, cancellationToken);
-
-        var expectedInput = new BusMessageSendIn<PushTokenErrorJson>(
-            message: new()
-            {
-                PushToken = input.PushToken
-            });
-
-        mockTokenErrorBusApi.Verify(a => a.SendMessageAsync(expectedInput, cancellationToken), Times.Once);
-    }
-
-    [Theory]
-    [MemberData(nameof(PushSendHandlerTestSource.InputInvalidTestData), MemberType = typeof(PushSendHandlerTestSource))]
-    [MemberData(nameof(PushSendHandlerTestSource.InputInvalidPushTokenTestData), MemberType = typeof(PushSendHandlerTestSource))]
     public static async Task InvokeAsync_InputIsInvalid_ExpectFailure(
         PushSendIn? input, Failure<HandlerFailureCode> expected)
     {
@@ -64,11 +23,14 @@ partial class PushSendHandlerTest
         var actual = await handler.HandleAsync(input, cancellationToken);
 
         Assert.StrictEqual(expected, actual);
+
+        mockTokenErrorBusApi.Verify(
+            static a => a.SendMessageAsync(It.IsAny<BusMessageSendIn<PushTokenErrorJson>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Theory]
     [MemberData(nameof(PushSendHandlerTestSource.InputValidTestData), MemberType = typeof(PushSendHandlerTestSource))]
-    internal static async Task InvokeAsync_InputIsValid_ExpectFirebaseFuncCalledOnce(
+    internal static async Task InvokeAsync_InputIsValid_ExpectFirebaseSendCalledOnce(
         PushSendIn input, FirebaseSendIn expectedInput)
     {
         var mockFirebaseFunc = BuildMockFirebaseSendFunc(Unit.Value);
@@ -124,9 +86,12 @@ partial class PushSendHandlerTest
         var handler = new PushSendHandler(mockFirebaseFunc.Object, mockTokenErrorBusApi.Object);
 
         var input = new PushSendIn(
-            pushToken: "Some push token",
-            title: "Some Title",
-            body: "Some body",
+            token: "Some push token",
+            notification: new()
+            {
+                Title = "Some Title",
+                Body = "Some body"
+            },
             data: null);
 
         var cancellationToken = new CancellationToken(canceled: false);

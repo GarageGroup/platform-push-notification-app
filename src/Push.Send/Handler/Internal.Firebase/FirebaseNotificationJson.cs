@@ -1,16 +1,17 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GarageGroup.Platform.PushNotification;
 
-internal sealed record class FirebaseNotificationJson
+internal readonly record struct FirebaseNotificationJson
 {
-    public FirebaseNotificationJson(string title, string body)
+    public FirebaseNotificationJson([AllowNull] string title, [AllowNull] string body)
     {
-        Title = title.OrEmpty();
-        Body = body.OrEmpty();
+        Title = title.OrNullIfEmpty();
+        Body = body.OrNullIfEmpty();
     }
 
-    public string Title { get; }
+    public string? Title { get; }
 
-    public string Body { get; }
+    public string? Body { get; }
 };

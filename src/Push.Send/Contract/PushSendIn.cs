@@ -6,19 +6,16 @@ namespace GarageGroup.Platform.PushNotification;
 
 public sealed record class PushSendIn
 {
-    public PushSendIn(string pushToken, string title, string body, [AllowNull] IReadOnlyDictionary<string, string> data)
+    public PushSendIn(string token, PushNotification? notification, [AllowNull] IReadOnlyDictionary<string, string> data)
     {
-        PushToken = pushToken.OrEmpty();
-        Title = title.OrEmpty();
-        Body = body.OrEmpty();
+        Token = token.OrEmpty();
+        Notification = notification;
         Data = data?.Count is not > 0 ? null : data;
     }
 
-    public string PushToken { get; }
+    public string Token { get; }
 
-    public string Title { get; }
-
-    public string Body { get; }
+    public PushNotification? Notification { get; }
 
     public IReadOnlyDictionary<string, string>? Data { get; }
 }
